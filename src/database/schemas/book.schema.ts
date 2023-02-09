@@ -8,6 +8,4 @@ const BookSchema = new Schema({
   price: { type: Number, required: true },
 });
 
-var BookModel = model("Book", BookSchema);
-
-export default BookModel || models.Book;
+export default model("Book", BookSchema) || models.Book;

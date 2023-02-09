@@ -1,14 +1,40 @@
 import mongoose from "mongoose";
-import { CreateMongoConnection } from "./create-mongo-connection";
+import CreateMongoConnection from "./create-mongo-connection";
 
 declare global {
-  var connection: Promise<typeof mongoose>;
+  var connection: any;
+  var mongo: {
+    conn: typeof mongoose | null;
+    mongoPromise: Promise<typeof mongoose> | null;
+  };
 }
 
-let connection = global.connection;
+let connection = global.mongo;
 
 if (!connection) {
-  connection = global.connection = CreateMongoConnection.handle();
+  connection = global.mongo = {
+    mongoPromise: CreateMongoConnection.handle(),
+    conn: null,
+  };
 }
 
-export default connection;
+class makeConnection {
+  static async handle() {
+    if (connection.conn) return connection.conn;
+
+    if (!connection.mongoPromise) {
+      connection.mongoPromise = CreateMongoConnection.handle();
+    }
+
+    try {
+      connection.conn = await connection.mongoPromise;
+    } catch (e) {
+      connection.mongoPromise = null;
+      throw e;
+    }
+
+    return connection.conn;
+  }
+}
+
+export default makeConnection;
